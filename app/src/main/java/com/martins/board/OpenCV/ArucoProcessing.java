@@ -1,7 +1,11 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+
+import com.martins.board.DetecatbleObject;
+import com.martins.board.FrameLogger;
+import com.martins.board.FrameReciever;
 
 import org.opencv.android.Utils;
 import org.opencv.aruco.Aruco;
@@ -25,39 +29,33 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
+public class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
     private static final String TAG = "Aruco";
     private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
     private static final int VIEW_MAT_AVG_LIST_SIZE = 3;
     private static final float MARKER_LENGTH = 0.04f;
     private static final Dictionary DICT = Aruco.getPredefinedDictionary(Aruco.DICT_4X4_250);
     private static final GridBoard GRID_BOARD = GridBoard.create(5, 7, MARKER_LENGTH, 0.01f, DICT);
-    private static ArucoProcessState CUR_MODE = ArucoProcessState.DETECTION;
     private static final CameraCalibrator CALIBRATOR = new CameraCalibrator();
     private static final int CALIB_COUNT = 5;
 
     private final Mat OPENGL_CONVERT_MATRIX = Mat.ones(4, 4, CvType.CV_64F);
 
-    private DetectorParameters detectorParams = DetectorParameters.create();
-    private List<Mat> markerCorners = new ArrayList<>();
-    private List<Mat> rejectedImgPoints = new ArrayList<>();
-    private Mat markerIds = new Mat();
-
     private final BlockingQueue<Mat> queue = new LinkedBlockingQueue<>();
-    private BlockingQueue<Mat> rvecList = new LinkedBlockingQueue<>();
-    private BlockingQueue<Mat> tvecList = new LinkedBlockingQueue<>();
+    private BlockingQueue<PoseResult> poseResultList = new LinkedBlockingQueue<>();
 
-    private ViewMatrixListener vmListener;
+    private DetecatbleObject detectableObject;
     private List<float[]> viewMatrixList = Collections.synchronizedList(new ArrayList<>(VIEW_MAT_AVG_LIST_SIZE));
 
     private int curViewMatAvgListPos = 0;
     private int curCalibCount = 0;
 
     private ScheduledExecutorService exec = Executors.newScheduledThreadPool(NUMBER_OF_CORES);
+    private PoseEstimator pe = new PoseEstimator();
     private Future<?> estimateResult;
     private Future<?> matrixConversionResult;
 
-    ArucoProcessing() {
+    public ArucoProcessing() {
         CameraDistortionParams.readParams();
 
         viewMatrixList.add(new float[16]);
@@ -71,7 +69,7 @@ class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
         exec.scheduleAtFixedRate(() -> {
             if (queue.size() > 20)
                 clearQueue();
-            //Log.d(TAG, "" + queue.size());
+            Log.d(TAG, "" + poseResultList.size());
         }, 0,1, TimeUnit.SECONDS);
     }
 
@@ -156,8 +154,14 @@ class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.submit(CALIBRATOR);
             executor.shutdown();
-            curCalibCount = 0;
-            return true;
+            try {
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                curCalibCount = 0;
+                detectableObject.setIsObjectHidden(false);
+                return true;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }
@@ -177,61 +181,39 @@ class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
     }
 
     @Override
-    public void addMatrixListener(ViewMatrixListener listener) {
-        vmListener = listener;
+    public void addMatrixListener(DetecatbleObject listener) {
+        detectableObject = listener;
     }
 
     @Override
     public void detect() {
         estimateResult = exec.scheduleAtFixedRate(() -> {
             if (queue.size() > 0 && CameraDistortionParams.hasParameters()) {
-                Mat cameraMatrix = CameraDistortionParams.getCameraMatrix();
-                Mat distCoeff = CameraDistortionParams.getDistCoeff();
-
-                Mat frame = getFrameFromQueue();
-
-                Aruco.detectMarkers(frame, DICT, markerCorners, markerIds, detectorParams,
-                        rejectedImgPoints, cameraMatrix, distCoeff);
-
-                if (markerIds.rows() > 0) {
-                    Mat rvecs = new Mat();
-                    Mat tvecs = new Mat();
-                    Mat rvecs_new = new Mat(1, 3, CvType.CV_64F);
-                    Mat tvecs_new = new Mat(1, 3, CvType.CV_64F);
-
-                    Aruco.estimatePoseSingleMarkers(
-                            markerCorners, MARKER_LENGTH, cameraMatrix, distCoeff, rvecs, tvecs);
-
-                    rvecs_new.put(0, 0, rvecs.get(0, 0));
-                    tvecs_new.put(0, 0, tvecs.get(0, 0));
-
-                    rvecList.add(rvecs_new.clone());
-                    tvecList.add(tvecs_new.clone());
-
-                    for (int i = 0; i < markerIds.size().height; i++)
-                        Aruco.drawAxis(frame, cameraMatrix, distCoeff, rvecs_new, tvecs_new, 0.1f);
-
-                    drawDebugFrame(frame);
-
-                    rvecs_new.release();
-                    tvecs_new.release();
-
-                    rvecs.release();
-                    tvecs.release();
-                }
+                PoseResult result = pe.run(getFrameFromQueue());
+                if (result != null)
+                    poseResultList.add(result);
             }
         }, 0,5, TimeUnit.MILLISECONDS);
 
+        estimateResult = exec.scheduleAtFixedRate(() -> {
+            if (queue.size() > 0 && CameraDistortionParams.hasParameters()) {
+                PoseResult result = pe.run(getFrameFromQueue());
+                if (result != null)
+                    poseResultList.add(result);
+            }
+        }, 1,5, TimeUnit.MILLISECONDS);
+
         matrixConversionResult = exec.scheduleAtFixedRate(() -> {
-            if (rvecList.size() > 0 && tvecList.size() > 0) {
-                Mat rvecs_new = new Mat(1, 3, CvType.CV_64F);
-                Mat tvecs_new = new Mat(1, 3, CvType.CV_64F);
+            if (poseResultList.size() > 0) {
+                PoseResult result = null;
                 try {
-                    rvecs_new = rvecList.take();
-                    tvecs_new = tvecList.take();
+                    result = poseResultList.take();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
+                Mat rvecs_new = result.getRvec();
+                Mat tvecs_new = result.getTvec();
 
                 float[] curViewMatrix = createOpenglViewMatrix(rvecs_new, tvecs_new);
                 float[] avgViewMatrix = getAverageOpenglViewMatrix();
@@ -246,8 +228,8 @@ class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
 
                 avgViewMatrix = getAverageOpenglViewMatrix();
 
-                if (vmListener != null)
-                    vmListener.recieveViewMatrix(avgViewMatrix);
+                if (detectableObject != null)
+                    detectableObject.recieveViewMatrix(avgViewMatrix);
 
                 rvecs_new.release();
                 tvecs_new.release();
@@ -259,6 +241,7 @@ class ArucoProcessing implements FrameReciever, ArucoProcessStateListener {
     public void calibrate(){
         estimateResult.cancel(true);
         matrixConversionResult.cancel(true);
+        detectableObject.setIsObjectHidden(true);
     }
 
     public void clearQueue() {

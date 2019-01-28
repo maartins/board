@@ -1,11 +1,9 @@
 package com.martins.board;
 
-import android.graphics.Bitmap;
-
 import org.opencv.core.Mat;
 
-interface FrameReciever {
+public interface FrameReciever {
     void addFrame(Mat image);
 
-    void addMatrixListener(ViewMatrixListener listener);
+    void addMatrixListener(DetecatbleObject listener);
 }

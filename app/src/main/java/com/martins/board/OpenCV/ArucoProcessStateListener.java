@@ -1,4 +1,4 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 interface ArucoProcessStateListener {
     void detect();

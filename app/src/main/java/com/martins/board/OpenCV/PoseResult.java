@@ -1,4 +1,4 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 import org.opencv.core.Mat;
 

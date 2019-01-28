@@ -1,9 +1,9 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
-public class ArucoProcessingStateManager {
+public class ArucoProcessStateManager {
     private ArucoProcessStateListener arucoProcess;
 
-    public ArucoProcessingStateManager(ArucoProcessStateListener process) {
+    public ArucoProcessStateManager(ArucoProcessStateListener process) {
         arucoProcess = process;
     }
 

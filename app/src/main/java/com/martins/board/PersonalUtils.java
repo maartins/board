@@ -1,11 +1,8 @@
 package com.martins.board;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
 
 import org.json.JSONObject;
 import org.opencv.android.Utils;
@@ -20,7 +17,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-class PersonalUtils {
+public class PersonalUtils {
     private static final String TAG = "PersonalUtils";
     private static final File STORAGE_DIR = new File(Environment.getExternalStorageDirectory()
                                                         + "/Android/data/"

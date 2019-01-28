@@ -1,13 +1,14 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 import android.util.Log;
+
+import com.martins.board.OpenCV.CameraDistortionParams;
 
 import org.opencv.aruco.Aruco;
 import org.opencv.aruco.CharucoBoard;
 import org.opencv.aruco.Dictionary;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;

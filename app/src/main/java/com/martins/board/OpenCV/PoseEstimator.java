@@ -1,7 +1,8 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 import android.graphics.Bitmap;
 
+import com.martins.board.FrameLogger;
 import org.opencv.android.Utils;
 import org.opencv.aruco.Aruco;
 import org.opencv.aruco.DetectorParameters;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-class PoseEstimator implements Callable<PoseResult> {
+class PoseEstimator {
     private static final String TAG = "PoseEstimator";
     private static final float MARKER_LENGTH = 0.04f;
     private static final Dictionary DICT = Aruco.getPredefinedDictionary(Aruco.DICT_4X4_250);
@@ -22,11 +23,9 @@ class PoseEstimator implements Callable<PoseResult> {
     private List<Mat> markerCorners = new ArrayList<>();
     private List<Mat> rejectedImgPoints = new ArrayList<>();
     private Mat markerIds = new Mat();
-    private Mat frame = new Mat();
 
-    @Override
-    public PoseResult call() throws Exception {
-        PoseResult result = new PoseResult();
+    public PoseResult run(Mat frame) {
+        PoseResult result = null;
         Mat cameraMatrix = CameraDistortionParams.getCameraMatrix();
         Mat distCoeff = CameraDistortionParams.getDistCoeff();
 
@@ -45,6 +44,7 @@ class PoseEstimator implements Callable<PoseResult> {
             rvecs_new.put(0, 0, rvecs.get(0, 0));
             tvecs_new.put(0, 0, tvecs.get(0, 0));
 
+            result = new PoseResult();
             result.setRvec(rvecs_new.clone());
             result.setTvec(tvecs_new.clone());
 
@@ -62,10 +62,6 @@ class PoseEstimator implements Callable<PoseResult> {
         frame.release();
 
         return result;
-    }
-
-    public void setFrame(Mat frame) {
-        this.frame = frame;
     }
 
     private void drawDebugFrame(Mat frame){

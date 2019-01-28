@@ -1,18 +1,19 @@
-package com.martins.board;
+package com.martins.board.OpenCV;
 
 import android.util.Log;
+
+import com.martins.board.PersonalUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
-class CameraDistortionParams {
+public class CameraDistortionParams {
     private static final String TAG = "CameraDistortionParams";
     private static Mat cameraMatrix = new Mat();
     private static Mat distCoeff = new Mat();

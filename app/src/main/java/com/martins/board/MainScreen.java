@@ -9,6 +9,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.martins.board.OpenCV.ArucoProcessState;
+import com.martins.board.OpenCV.ArucoProcessing;
+import com.martins.board.OpenCV.ArucoProcessStateManager;
+
 public class MainScreen extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
@@ -21,7 +25,7 @@ public class MainScreen extends AppCompatActivity {
     private FrameLogger logger;
     private CameraOpenGL cogl;
     private ArucoProcessing ap = new ArucoProcessing();
-    private ArucoProcessingStateManager stateManager = new ArucoProcessingStateManager(ap);
+    private ArucoProcessStateManager stateManager = new ArucoProcessStateManager(ap);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
