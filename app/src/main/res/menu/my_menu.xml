@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/calibrate_button"
+        android:icon="@drawable/more_vert_white_button"
+        android:title="@string/calib"
+        app:showAsAction="collapseActionView" />
+    <item
+        android:id="@+id/debug_view_button"
+        android:title="@string/enable_debug_view" />
+</menu>

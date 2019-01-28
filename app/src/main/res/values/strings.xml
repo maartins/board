@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">board</string>
+    <string name="calib">Calibrate camera</string>
+    <string name="test_value">test_value</string>
+    <string name="enable_debug_view">Toggle debug view</string>
+</resources>
