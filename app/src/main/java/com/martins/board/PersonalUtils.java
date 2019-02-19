@@ -1,5 +1,6 @@
 package com.martins.board;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;
@@ -11,11 +12,13 @@ import org.opencv.aruco.Dictionary;
 import org.opencv.core.Mat;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class PersonalUtils {
     private static final String TAG = "PersonalUtils";
@@ -73,6 +76,17 @@ public class PersonalUtils {
         return (testFile.exists() && !testFile.isDirectory());
     }
 
+    public static String loadRawString(int rawId, Context context) throws Exception{
+        InputStream is = context.getResources().openRawResource(rawId);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        int len;
+        while((len = is.read(buf))!= -1){
+            baos.write(buf, 0, len);
+        }
+        return baos.toString();
+    }
+
     public static void writeJSON(String fileName, JSONObject source) throws IOException {
         if (!STORAGE_DIR.exists())
             STORAGE_DIR.mkdirs();
@@ -84,7 +98,19 @@ public class PersonalUtils {
         fw.close();
     }
 
+    public static void writeJSON(String fileName, String source) throws IOException {
+        if (!STORAGE_DIR.exists())
+            STORAGE_DIR.mkdirs();
+
+        Log.d(TAG, "Writing JSON to: " + STORAGE_DIR.getPath() + "/" + fileName + ".json");
+
+        FileWriter fw = new FileWriter(STORAGE_DIR.getPath() + "/" + fileName + ".json");
+        fw.write(source);
+        fw.close();
+    }
+
     public static String readJSON(String fileName) throws IOException {
+        Log.d(TAG, "Reading JSON : " + STORAGE_DIR.getPath() + "/" + fileName + ".json");
         BufferedReader br = new BufferedReader(new FileReader(STORAGE_DIR.getPath() + "/"
                                                                         + fileName + ".json"));
         try {
@@ -120,6 +146,24 @@ public class PersonalUtils {
         Log.d(TAG, "END");
     }
 
+    public static void displaySquareMatrix(float[] matrix, String id){
+        int len = matrix.length;
+        int size = (int) Math.sqrt(len);
+        String s = "";
+
+        int counter = 0;
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                s += matrix[counter] + ", ";
+                counter++;
+            }
+            s += "\n";
+        }
+        Log.d(TAG, "START " + id);
+        Log.d(TAG, s);
+        Log.d(TAG, "END");
+    }
+
     public static void displaySquareMatrix(Mat matrix){
         int size = (int)matrix.size().height;
         String s = "";
@@ -131,6 +175,21 @@ public class PersonalUtils {
             s += "\n";
         }
         Log.d(TAG, "START");
+        Log.d(TAG, s);
+        Log.d(TAG, "END");
+    }
+
+    public static void displaySquareMatrix(Mat matrix, String id){
+        int size = (int)matrix.size().height;
+        String s = "";
+
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                s += matrix.get(i, j)[0] + ", ";
+            }
+            s += "\n";
+        }
+        Log.d(TAG, "START " + id);
         Log.d(TAG, s);
         Log.d(TAG, "END");
     }

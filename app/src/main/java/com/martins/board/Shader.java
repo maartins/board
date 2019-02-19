@@ -21,8 +21,8 @@ public class Shader {
     public Shader() {}
 
     public void setProgram(int vertexShader, int fragmentShader, Context context) throws Exception{
-        vertexSource = loadRawString(vertexShader, context);
-        fragmentSource = loadRawString(fragmentShader, context);
+        vertexSource = PersonalUtils.loadRawString(vertexShader, context);
+        fragmentSource = PersonalUtils.loadRawString(fragmentShader, context);
 
         mShaderVertex = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
         mShaderFragment = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
@@ -104,16 +104,5 @@ public class Shader {
         }
 
         return shader;
-    }
-
-    private String loadRawString(int rawId, Context context) throws Exception{
-        InputStream is = context.getResources().openRawResource(rawId);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buf = new byte[1024];
-        int len;
-        while((len = is.read(buf))!= -1){
-            baos.write(buf, 0, len);
-        }
-        return baos.toString();
     }
 }

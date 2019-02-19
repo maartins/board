@@ -29,7 +29,7 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
 
     private Context context;
 
-    private FrameReciever reciever;
+    private FrameReceiver receiver;
 
     private Camera cam;
     private SurfaceTexture texture;
@@ -39,6 +39,7 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
 
     private BackgroundObject backgroundObject;
     private CubeObject cube;
+    private BoardObject boardObject;
 
     public CameraOpenGL(Context context) {
         super(context);
@@ -57,6 +58,7 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
     private void init() {
         backgroundObject = new BackgroundObject(context);
         cube = new CubeObject(context);
+        boardObject = new BoardObject(context);
 
         setPreserveEGLContextOnPause(true);
         setEGLContextClientVersion(2);
@@ -64,9 +66,9 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
-    public void addFrameReciever(FrameReciever ip) {
-        reciever = ip;
-        reciever.addMatrixListener(cube);
+    public void addFrameReciever(FrameReceiver ip) {
+        receiver = ip;
+        receiver.addMatrixListener(cube);
     }
 
     @Override
@@ -78,8 +80,9 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
     @Override
     public synchronized void onSurfaceCreated(GL10 gl, EGLConfig config) {
         try {
-            backgroundObject.setShaderProgramFiles(R.raw.background_vshader, R.raw.background_fshader);
-            cube.setShaderProgramFiles(R.raw.cube_vshader, R.raw.cube_fshader);
+            backgroundObject.setShaderProgramFiles();
+            cube.setShaderProgramFiles();
+            boardObject.setShaderProgramFiles();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,6 +135,7 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
         backgroundObject.setRatio(getClosestSupportedViewSize(params, viewWidth, viewHeight));
         backgroundObject.onSurfaceChanged(width, height);
         cube.onSurfaceChanged(width, height);
+        boardObject.onSurfaceChanged(width, height);
 
         requestRender();
     }
@@ -148,10 +152,11 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
             updateTexture = false;
 
             backgroundObject.draw();
-            if (reciever != null && isBufferedSnapshotReady)
-                reciever.addFrame(saveTextureAsMat(viewWidth, viewHeight));
+            if (receiver != null && isBufferedSnapshotReady)
+                receiver.addFrame(saveTextureAsMat(viewWidth, viewHeight));
 
             cube.draw();
+            boardObject.draw();
         }
     }
 

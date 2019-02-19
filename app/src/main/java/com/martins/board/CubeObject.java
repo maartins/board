@@ -18,7 +18,6 @@ package com.martins.board;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 
 import com.martins.board.OpenCV.CameraDistortionParams;
 
@@ -34,9 +33,9 @@ public class CubeObject implements DetecatbleObject, DrawableObject{
     private final int VERTEX_STRIDE = COORDS_PER_VERTEX * 4;
     private final int COLOR_STRIDE = VALUES_PER_COLOR * 4;
 
-    private final FloatBuffer mVertexBuffer;
-    private final FloatBuffer mColorBuffer;
-    private final ByteBuffer mIndexBuffer;
+    private final FloatBuffer vertexBuffer;
+    private final FloatBuffer colorBuffer;
+    private final ByteBuffer indexBuffer;
 
     private int positionHandle;
     private int colorHandle;
@@ -88,23 +87,24 @@ public class CubeObject implements DetecatbleObject, DrawableObject{
         };
 
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(VERTICES.length * 4).order(ByteOrder.nativeOrder());
-        mVertexBuffer = byteBuffer.asFloatBuffer();
-        mVertexBuffer.put(VERTICES).position(0);
+        vertexBuffer = byteBuffer.asFloatBuffer();
+        vertexBuffer.put(VERTICES).position(0);
 
         byteBuffer = ByteBuffer.allocateDirect(COLORS.length * 4).order(ByteOrder.nativeOrder());
-        mColorBuffer = byteBuffer.asFloatBuffer();
-        mColorBuffer.put(COLORS).position(0);
+        colorBuffer = byteBuffer.asFloatBuffer();
+        colorBuffer.put(COLORS).position(0);
 
-        mIndexBuffer = ByteBuffer.allocateDirect(INDICES.length);
-        mIndexBuffer.put(INDICES).position(0);
+        indexBuffer = ByteBuffer.allocateDirect(INDICES.length);
+        indexBuffer.put(INDICES).position(0);
 
         Matrix.setIdentityM(modelMatrix, 0);
         float scale = 0.2f;
         Matrix.scaleM(modelMatrix, 0, modelMatrix, 0, scale, scale, scale);
     }
 
-    public void setShaderProgramFiles(int vertexShader, int fragmentShader) throws Exception {
-        cubeShader.setProgram(vertexShader, fragmentShader, context);
+    @Override
+    public void setShaderProgramFiles() throws Exception {
+        cubeShader.setProgram(R.raw.cube_vshader, R.raw.cube_fshader, context);
         positionHandle = cubeShader.getHandle("aPosition");
         colorHandle = cubeShader.getHandle("aColor");
         mvpMatrixHandle = cubeShader.getHandle("uMVPMatrix");
@@ -134,17 +134,17 @@ public class CubeObject implements DetecatbleObject, DrawableObject{
             // Prepare the cube coordinate data.
             GLES20.glEnableVertexAttribArray(positionHandle);
             GLES20.glVertexAttribPointer(
-                    positionHandle, 3, GLES20.GL_FLOAT, false, VERTEX_STRIDE, mVertexBuffer);
+                    positionHandle, 3, GLES20.GL_FLOAT, false, VERTEX_STRIDE, vertexBuffer);
 
             // Prepare the cube color data.
             GLES20.glEnableVertexAttribArray(colorHandle);
             GLES20.glVertexAttribPointer(
-                    colorHandle, 4, GLES20.GL_FLOAT, false, COLOR_STRIDE, mColorBuffer);
+                    colorHandle, 4, GLES20.GL_FLOAT, false, COLOR_STRIDE, colorBuffer);
 
             // Prepare MVP
             GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
 
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE, mIndexBuffer);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE, indexBuffer);
             GLES20.glDisableVertexAttribArray(positionHandle);
             GLES20.glDisableVertexAttribArray(colorHandle);
         }
@@ -162,8 +162,8 @@ public class CubeObject implements DetecatbleObject, DrawableObject{
 }
 
 
-/*if (CameraDistortionParams.hasParameters()) {
-    Mat K = CameraDistortionParams.getCameraMatrix();
+/*if (cameradistortionparams.hasParameters()) {
+    Mat K = cameradistortionparams.getCameraMatrix();
     float x0 = (float) K.get(0, 2)[0];
     float y0 = (float) K.get(1, 2)[0];
 

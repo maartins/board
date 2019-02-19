@@ -56,7 +56,7 @@ public class MainScreen extends AppCompatActivity {
 
     public void onNextFrameButtonClicked(View v) {
         if (ap.addCalibrationFrame()) {
-            v.setVisibility(View.INVISIBLE);
+            v.setVisibility(View.GONE);
             stateManager.changeState(ArucoProcessState.DETECTION);
         }
     }

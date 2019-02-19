@@ -34,8 +34,9 @@ public class BackgroundObject implements DrawableObject{
         quadVertices.put(VERTICES).position(0);
     }
 
-    public void setShaderProgramFiles(int vertexShader, int fragmentShader) throws Exception {
-        backgroundShader.setProgram(vertexShader, fragmentShader, context);
+    @Override
+    public void setShaderProgramFiles() throws Exception {
+        backgroundShader.setProgram(R.raw.background_vshader, R.raw.background_fshader, context);
         positionHandle = backgroundShader.getHandle("aPosition");
         transformHandle = backgroundShader.getHandle("uTransformM");
         orientationHandle = backgroundShader.getHandle("uOrientationM");

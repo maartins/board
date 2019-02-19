@@ -2,6 +2,7 @@ package com.martins.board;
 
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.util.Log;
 
 /**
  * This class defines the OES Texture that can be attached to SurfaceTexture
@@ -21,6 +22,8 @@ public class TextureHandle {
         int[] mTextureHandles = new int[1];
         GLES20.glGenTextures(1, mTextureHandles, 0);
         textureHandler = mTextureHandles[0];
+
+        Log.d("asd", "id: " + textureHandler);
 
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mTextureHandles[0]);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);

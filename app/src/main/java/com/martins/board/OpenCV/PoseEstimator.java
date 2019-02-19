@@ -14,22 +14,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-class PoseEstimator {
+final class PoseEstimator {
     private static final String TAG = "PoseEstimator";
     private static final float MARKER_LENGTH = 0.04f;
-    private static final Dictionary DICT = Aruco.getPredefinedDictionary(Aruco.DICT_4X4_250);
+    private final Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_4X4_100);
 
-    private DetectorParameters detectorParams = DetectorParameters.create();
-    private List<Mat> markerCorners = new ArrayList<>();
-    private List<Mat> rejectedImgPoints = new ArrayList<>();
+    private final DetectorParameters detectorParams = DetectorParameters.create();
+    private final List<Mat> markerCorners = new ArrayList<>();
+    private final List<Mat> rejectedImgPoints = new ArrayList<>();
     private Mat markerIds = new Mat();
 
-    public PoseResult run(Mat frame) {
+    public final PoseResult run(Mat frame) {
         PoseResult result = null;
         Mat cameraMatrix = CameraDistortionParams.getCameraMatrix();
         Mat distCoeff = CameraDistortionParams.getDistCoeff();
 
-        Aruco.detectMarkers(frame, DICT, markerCorners, markerIds, detectorParams,
+        Aruco.detectMarkers(frame, dictionary, markerCorners, markerIds, detectorParams,
                 rejectedImgPoints, cameraMatrix, distCoeff);
 
         if (markerIds.size().height > 0) {
@@ -71,3 +71,14 @@ class PoseEstimator {
         FrameLogger.setDebugFrame(tbmp);
     }
 }
+
+/*int retVal = Aruco.estimatePoseBoard(markerCorners, markerIds, GRID_BOARD, cameraMatrix,
+        distCoeff, rvecs, tvecs);
+
+if (retVal > 0) {
+    //Log.d(TAG, "rvecs: " + rvecs.size() + " depth: " + rvecs.depth() + " dims: " + rvecs.dims());
+    //Log.d(TAG, "tvecs: " + tvecs.size() + " depth: " + tvecs.depth() + " dims: " + tvecs.dims());
+
+    Aruco.drawDetectedMarkers(frame, markerCorners, markerIds, new Scalar(120, 120, 120));
+    drawDebugFrame(frame);
+}*/
