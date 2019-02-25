@@ -30,12 +30,13 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
     private ScheduledExecutorService exec = Executors.newScheduledThreadPool(NUMBER_OF_CORES);
 
     private final PoseEstimator poseEstimator = new PoseEstimator();
-    private final ArucoToOpenglMatrixCreator matrixConverter = new ArucoToOpenglMatrixCreator();
+    private final ArucoToOpenglMatrixConverter matrixConverter = new ArucoToOpenglMatrixConverter();
     private List<Future<?>> estimateResultList = new ArrayList<>();
     private Future<?> matrixConversionResult;
 
-    private DetecatbleObject detectableObject;
+    private List<DetecatbleObject> detectableObjects = new ArrayList<>();
 
+    private ArucoProcessStateManager apsm = new ArucoProcessStateManager(this);
 
     public ArucoProcessing() {
         CameraDistortionParams.readParams();
@@ -44,7 +45,7 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
             estimateResultList.add(null);
 
         exec.scheduleAtFixedRate(() -> {
-            if (frameQueue.size() > 10)
+            if (frameQueue.size() > 20)
                 clearQueue();
             //Log.d(TAG, "" + poseResultQueue.size());
         }, 0,1, TimeUnit.SECONDS);
@@ -83,7 +84,10 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
             try {
                 executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 curCalibCount = 0;
-                detectableObject.setIsObjectHidden(false);
+
+                for (DetecatbleObject o: detectableObjects)
+                    o.setIsObjectHidden(false);
+
                 return true;
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -111,7 +115,7 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
 
     @Override
     public void addMatrixListener(DetecatbleObject listener) {
-        detectableObject = listener;
+        detectableObjects.add(listener);
     }
 
     @Override
@@ -131,9 +135,11 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
         matrixConversionResult = exec.scheduleAtFixedRate(() -> {
             if (poseResultQueue.size() > 0) {
                 PoseResult result = getPoseResultFromQueue();
-                if (result != null)
-                    if (detectableObject != null)
-                        detectableObject.recieveViewMatrix(matrixConverter.run(result));
+                if (result != null) {
+                    float[] viewMatrix = matrixConverter.run(result);
+                    for (DetecatbleObject o : detectableObjects)
+                        o.recieveViewMatrix(viewMatrix);
+                }
             }
         }, 0,4, TimeUnit.MILLISECONDS);
     }
@@ -143,11 +149,16 @@ public class ArucoProcessing implements FrameReceiver, ArucoProcessStateListener
         for (Future<?> threadResult: estimateResultList)
             threadResult.cancel(true);
         matrixConversionResult.cancel(true);
-        detectableObject.setIsObjectHidden(true);
+        for (DetecatbleObject o: detectableObjects)
+            o.setIsObjectHidden(true);
     }
 
     public void clearQueue() {
         //Log.d(TAG, "Image frameQueue cleared");
         frameQueue.clear();
+    }
+
+    public void changeState(ArucoProcessState state) {
+        apsm.changeState(state);
     }
 }

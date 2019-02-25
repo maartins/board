@@ -25,7 +25,6 @@ public class MainScreen extends AppCompatActivity {
     private FrameLogger logger;
     private CameraOpenGL cogl;
     private ArucoProcessing ap = new ArucoProcessing();
-    private ArucoProcessStateManager stateManager = new ArucoProcessStateManager(ap);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +37,7 @@ public class MainScreen extends AppCompatActivity {
         cogl = findViewById(R.id.cameraOpenGL);
         cogl.addFrameReciever(ap);
 
-        stateManager.changeState(ArucoProcessState.DETECTION);
+        ap.changeState(ArucoProcessState.DETECTION);
     }
 
     private void removeTitleFromActionbar() {
@@ -57,7 +56,7 @@ public class MainScreen extends AppCompatActivity {
     public void onNextFrameButtonClicked(View v) {
         if (ap.addCalibrationFrame()) {
             v.setVisibility(View.GONE);
-            stateManager.changeState(ArucoProcessState.DETECTION);
+            ap.changeState(ArucoProcessState.DETECTION);
         }
     }
 
@@ -74,7 +73,7 @@ public class MainScreen extends AppCompatActivity {
         switch (id) {
             case R.id.calibrate_button:
                 findViewById(R.id.next_frame_button).setVisibility(View.VISIBLE);
-                stateManager.changeState(ArucoProcessState.CALIBRATION);
+                ap.changeState(ArucoProcessState.CALIBRATION);
                 break;
             case R.id.debug_view_button:
                 logger.setDebugViewWindowState();

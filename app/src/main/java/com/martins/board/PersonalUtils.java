@@ -164,6 +164,42 @@ public class PersonalUtils {
         Log.d(TAG, "END");
     }
 
+    public static void displaySquareMatrix(int[] matrix){
+        int len = matrix.length;
+        int size = (int) Math.sqrt(len);
+        String s = "";
+
+        int counter = 0;
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                s += matrix[counter] + ", ";
+                counter++;
+            }
+            s += "\n";
+        }
+        Log.d(TAG, "START");
+        Log.d(TAG, s);
+        Log.d(TAG, "END");
+    }
+
+    public static void displaySquareMatrix(int[] matrix, String id){
+        int len = matrix.length;
+        int size = (int) Math.sqrt(len);
+        String s = "";
+
+        int counter = 0;
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                s += matrix[counter] + ", ";
+                counter++;
+            }
+            s += "\n";
+        }
+        Log.d(TAG, "START " + id);
+        Log.d(TAG, s);
+        Log.d(TAG, "END");
+    }
+
     public static void displaySquareMatrix(Mat matrix){
         int size = (int)matrix.size().height;
         String s = "";

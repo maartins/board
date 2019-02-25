@@ -1,5 +1,7 @@
 package com.martins.board.OpenCV;
 
+import android.util.Log;
+
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -9,17 +11,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class ArucoToOpenglMatrixCreator {
-    private static final int VIEW_MAT_AVG_LIST_SIZE = 3;
+final class ArucoToOpenglMatrixConverter {
+    private static final String TAG = "AToOMatrixConverter";
+
+    private static final int VIEW_MAT_AVG_LIST_SIZE = 5;
     private final Mat OPENGL_CONVERT_MATRIX = Mat.ones(4, 4, CvType.CV_64F);
     private final List<float[]> viewMatrixList = Collections.synchronizedList(new ArrayList<>(VIEW_MAT_AVG_LIST_SIZE));
 
     private int curViewMatAvgListPos = 0;
 
-    ArucoToOpenglMatrixCreator() {
-        viewMatrixList.add(new float[16]);
-        viewMatrixList.add(new float[16]);
-        viewMatrixList.add(new float[16]);
+    private boolean isColdStart = true;
+    private int coldStartCounter = 0;
+
+    ArucoToOpenglMatrixConverter() {
+        for (int i = 0; i < VIEW_MAT_AVG_LIST_SIZE; i++)
+            viewMatrixList.add(new float[16]);
 
         for (int i = 1; i < 3; i++)
             for (int j = 0; j < 4; j++)
@@ -33,24 +39,31 @@ final class ArucoToOpenglMatrixCreator {
         float[] curViewMatrix = createOpenglViewMatrix(rvecs_new, tvecs_new);
         float[] avgViewMatrix = getAverageOpenglViewMatrix();
 
-        /*boolean isGliched = false;
+        boolean isGliched = false;
         for (int i = 0; i < curViewMatrix.length; i++)
-            if (Math.abs(curViewMatrix[i] - avgViewMatrix[i]) > 2.5f)
+            if (!isColdStart && Math.abs(curViewMatrix[i] - avgViewMatrix[i]) > 2.5f){
+                Log.d(TAG, "GLICH");
                 isGliched = true;
+            }
 
-        if (!isGliched)*/
-        addOpenglViewMatrixToTheList(curViewMatrix);
-
-        avgViewMatrix = getAverageOpenglViewMatrix();
+        if (!isGliched)
+            addOpenglViewMatrixToTheList(curViewMatrix);
 
         rvecs_new.release();
         tvecs_new.release();
 
-        return avgViewMatrix;
+        if (coldStartCounter < 19) {
+            coldStartCounter++;
+        } else if (coldStartCounter == 19) {
+            isColdStart = false;
+            coldStartCounter = 20;
+        }
+
+        return getAverageOpenglViewMatrix();
     }
 
     private void addOpenglViewMatrixToTheList(float[] viewMatrix) {
-        if (curViewMatAvgListPos >= VIEW_MAT_AVG_LIST_SIZE)
+        if (curViewMatAvgListPos == VIEW_MAT_AVG_LIST_SIZE - 1)
             curViewMatAvgListPos = 0;
 
         viewMatrixList.set(curViewMatAvgListPos, viewMatrix);

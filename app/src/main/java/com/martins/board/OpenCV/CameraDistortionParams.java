@@ -21,66 +21,50 @@ public class CameraDistortionParams {
 
     public static void readParams() {
         Log.d(TAG, "CHECKING FOR EXISTING CAMERA DISTORTION PARAMS.");
+        String defaultParams = "";
+
         if (PersonalUtils.fileExists(TAG + ".json")) {
             Log.d(TAG, "EXISTING CAMERA DISTORTION PARAMS FOUND.");
 
             try {
-                JSONObject mainJSONObj = new JSONObject(PersonalUtils.readJSON(TAG));
-                JSONArray camMatJSONArray = (JSONArray) mainJSONObj.get("cameraMatrix");
-                JSONArray distCoeffJSONArray = (JSONArray) mainJSONObj.get("distCoeff");
-                Log.d(TAG, "camMatJSONArray: " + camMatJSONArray.toString());
-                Log.d(TAG, "distCoeffJSONArray: " + distCoeffJSONArray.toString());
-
-                cameraMatrix = new Mat(3, 3, CvType.CV_64F);
-                distCoeff = new Mat(1, 5, CvType.CV_64F);
-
-                int k = 0;
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        cameraMatrix.put(i, j, camMatJSONArray.getDouble(k++));
-                    }
-                }
-
-                int j = 0;
-                for (int i = 0; i < 5; i++) {
-                    distCoeff.put(0, i, distCoeffJSONArray.getDouble(j++));
-                }
-
-                valid = true;
-            } catch (JSONException | IOException e) {
+                defaultParams = PersonalUtils.readJSON(TAG);
+            } catch (IOException e) {
                 e.printStackTrace();
+
+                Log.d(TAG, "ERROR OCCURRED, USING HARDCODED DEFAULT VALUES.");
+                defaultParams = "{\"cameraMatrix\":[1682.266679745014,0,571.2382803775213,0,1674.6867549281956,925.1417992019627,0,0,1],\"distCoeff\":[0.3352624426287654,-5.135536312616414,0.003871361810529251,-3.703170912657119E-4,32.87610481611109]}";
             }
         } else {
             Log.d(TAG, "EXISTING CAMERA DISTORTION PARAMS FILE NOT FOUND.");
-            Log.d(TAG, "TRYING TO LOAD HARDCODED DEFAULT VALUES.");
-            String defaultParams = "{\"cameraMatrix\":[1682.266679745014,0,571.2382803775213,0,1674.6867549281956,925.1417992019627,0,0,1],\"distCoeff\":[0.3352624426287654,-5.135536312616414,0.003871361810529251,-3.703170912657119E-4,32.87610481611109]}";
+            Log.d(TAG, "USING HARDCODED DEFAULT VALUES.");
+            defaultParams = "{\"cameraMatrix\":[1682.266679745014,0,571.2382803775213,0,1674.6867549281956,925.1417992019627,0,0,1],\"distCoeff\":[0.3352624426287654,-5.135536312616414,0.003871361810529251,-3.703170912657119E-4,32.87610481611109]}";
+        }
 
-            try {
-                JSONObject mainJSONObj = new JSONObject(defaultParams);
-                JSONArray camMatJSONArray = (JSONArray) mainJSONObj.get("cameraMatrix");
-                JSONArray distCoeffJSONArray = (JSONArray) mainJSONObj.get("distCoeff");
-                Log.d(TAG, "camMatJSONArray: " + camMatJSONArray.toString());
-                Log.d(TAG, "distCoeffJSONArray: " + distCoeffJSONArray.toString());
+        try {
+            JSONObject mainJSONObj = new JSONObject(defaultParams);
+            JSONArray camMatJSONArray = (JSONArray) mainJSONObj.get("cameraMatrix");
+            JSONArray distCoeffJSONArray = (JSONArray) mainJSONObj.get("distCoeff");
+            Log.d(TAG, "camMatJSONArray: " + camMatJSONArray.toString());
+            Log.d(TAG, "distCoeffJSONArray: " + distCoeffJSONArray.toString());
 
-                cameraMatrix = new Mat(3, 3, CvType.CV_64F);
-                distCoeff = new Mat(1, 5, CvType.CV_64F);
+            cameraMatrix = new Mat(3, 3, CvType.CV_64F);
+            distCoeff = new Mat(1, 5, CvType.CV_64F);
 
-                int k = 0;
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        cameraMatrix.put(i, j, camMatJSONArray.getDouble(k++));
-                    }
+            int k = 0;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    cameraMatrix.put(i, j, camMatJSONArray.getDouble(k++));
                 }
-
-                int j = 0;
-                for (int i = 0; i < 5; i++) {
-                    distCoeff.put(0, i, distCoeffJSONArray.getDouble(j++));
-                }
-
-                valid = true;
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
+
+            int j = 0;
+            for (int i = 0; i < 5; i++) {
+                distCoeff.put(0, i, distCoeffJSONArray.getDouble(j++));
+            }
+
+            valid = true;
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 

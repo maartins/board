@@ -69,6 +69,7 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
     public void addFrameReciever(FrameReceiver ip) {
         receiver = ip;
         receiver.addMatrixListener(cube);
+        receiver.addMatrixListener(boardObject);
     }
 
     @Override
@@ -127,8 +128,17 @@ public class CameraOpenGL extends GLSurfaceView implements GLSurfaceView.Rendere
         }
 
         Camera.Parameters params = cam.getParameters();
+        List<String> focusModes = params.getSupportedFocusModes();
+        List<String> antiBandingModes = params.getSupportedAntibanding();
 
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED); //FOCUS_MODE_CONTINUOUS_PICTURE
+        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE))
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        else
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+
+        if (antiBandingModes.contains(Camera.Parameters.ANTIBANDING_AUTO))
+            params.setAntibanding(Camera.Parameters.ANTIBANDING_AUTO);
+
         cam.setParameters(params);
         cam.startPreview();
 
